@@ -1,25 +1,29 @@
-import React from 'react';
-import { BrowserRouter } from "react-router-dom";
+import React, { useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import MainNav from './navigate/MainNav';
-import Routers from "./routes/Routers";
-import { useDispatch } from "react-redux";
+import Routers from './routes/Routers';
+import { useDispatch } from 'react-redux';
 import { checkAuthAC } from './store/actions';
 
 function App() {
-  //Check if user isAuth
-  //Connect to Back-end
   const dispatch = useDispatch();
-  React.useEffect(() => {
-    (async () => {
-      //Auth Data
-      const res = await fetch("/auth/isAuth");
-      const data = await res.json();
-      //Catch errror
-      if (data.err) {
-        return alert(data.err);
+
+  useEffect(() => {
+    const fetchAuthData = async () => {
+      try {
+        const res = await fetch('/auth/isAuth');
+        const data = await res.json();
+        if (data.err) {
+          alert(data.err);
+        } else {
+          dispatch(checkAuthAC(data));
+        }
+      } catch (error) {
+        console.error('Error fetching auth data:', error);
       }
-      dispatch(checkAuthAC(data));
-    })();
+    };
+
+    fetchAuthData();
   }, [dispatch]);
 
   return (
@@ -31,3 +35,4 @@ function App() {
 }
 
 export default App;
+

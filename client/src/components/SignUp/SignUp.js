@@ -1,24 +1,23 @@
-import "../../App.css";
 import React, { useRef } from "react";
-import {
-  Button,
-  Form
-} from "react-bootstrap";
-import { thunkSignUpAC } from "../../store/actions";
+import { Button, Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { thunkSignUpAC } from "../../store/actions";
 
 function SignUp() {
-  //JS
   const formEl = useRef();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  navigate("/")
+  navigate("/");
 
-  //Return Component
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(thunkSignUpAC(e, formEl));
+  };
+
   return (
-    <Form ref={formEl} className="w-50 mx-auto my-3" onSubmit={(e) => dispatch(thunkSignUpAC(e, formEl))}>
+    <Form ref={formEl} className="w-50 mx-auto my-3" onSubmit={handleSubmit}>
       <h3>Sign Up</h3>
       <Form.Group className="mb-3" controlId="signUpEmail">
         <Form.Label>Email address</Form.Label>
