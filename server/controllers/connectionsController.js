@@ -1,113 +1,106 @@
 const { Connection } = require("pg");
-const { Connections, User, Profile, Sequelize } = require("../db/models");
+const { Connections, User, Profile } = require("../db/models");
 
 exports.connectionsGet = async (req, res) => {
-  const users = await User.findAll({
-    attributes: ["login", "id"],
-  });
-  const profile = await Profile.findAll();
-  console.log(users);
-
-  const connections = await Connections.findAll();
-  console.log(connections);
-  if (connections) {
-    const resArr = connections.map((el) => {
-      let studentLogin;
-      let studentId;
-      let investorLogin;
-      let investorId;
-      let studentInfo;
-      let investorInfo;
-      let studentCountry;
-      let investorCountry;
-      let studentLanguage;
-      let investorLanguage;
-      //Search for Student
-      for (let i of users) {
-        if (i.dataValues.id === el.dataValues.student_id) {
-          studentLogin = i.dataValues.login;
-          studentId = el.dataValues.student_id;
-          for (let y of profile) {
-            if (i.dataValues.id === y.dataValues.user_id) {
-              studentInfo = y.dataValues.info;
-              studentCountry = y.dataValues.country;
-              studentLanguage = y.dataValues.language;
-            }
-          }
-        }
-        if (i.dataValues.id === el.dataValues.investor_id) {
-          investorLogin = i.dataValues.login;
-          investorId = el.dataValues.investor_id;
-          for (let y of profile) {
-            if (i.dataValues.id === y.dataValues.user_id) {
-              investorInfo = y.dataValues.info;
-              investorCountry = y.dataValues.country;
-              investorLanguage = y.dataValues.language;
-            }
-          }
-        }
-      }
-
-      return {
-        id: el.dataValues.id,
-        investor: investorLogin,
-        investorId,
-        student: studentLogin,
-        studentId,
-        status: el.dataValues.status,
-        studentInfo,
-        investorInfo,
-        studentCountry,
-        investorCountry,
-        studentLanguage,
-        investorLanguage,
-      };
+  try {
+    const users = await User.findAll({
+      attributes: ["login", "id"],
     });
-    console.log("32 Line", resArr);
-    res.json(resArr);
+
+    const profileMap = new Map();
+    const profiles = await Profile.findAll();
+    profiles.forEach((profile) => {
+      profileMap.set(profile.user_id, {
+        info: profile.info,
+        country: profile.country,
+        language: profile.language,
+      });
+    });
+
+    const connections = await Connections.findAll();
+    if (connections) {
+      const resArr = connections.map((el) => {
+        const student = users.find((user) => user.id === el.student_id);
+        const investor = users.find((user) => user.id === el.investor_id);
+
+        return {
+          id: el.id,
+          investor: investor.login,
+          investorId: el.investor_id,
+          student: student.login,
+          studentId: el.student_id,
+          status: el.status,
+          studentInfo: profileMap.get(el.student_id)?.info,
+          investorInfo: profileMap.get(el.investor_id)?.info,
+          studentCountry: profileMap.get(el.student_id)?.country,
+          investorCountry: profileMap.get(el.investor_id)?.country,
+          studentLanguage: profileMap.get(el.student_id)?.language,
+          investorLanguage: profileMap.get(el.investor_id)?.language,
+        };
+      });
+      res.json(resArr);
+    }
+  } catch (error) {
+    console.error("Error fetching connections:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
 exports.connectionsUpdate = async (req, res) => {
-  const connection = await Connections.findOne({
-    where: {
-      student_id: req.session.user.id,
-      investor_id: req.body.investor_id,
-    },
-  });
-  if (connection === null) {
-    const newConnection = new Connections({
-      student_id: req.session.user.id,
-      investor_id: req.body.investor_id,
-      status: req.body.status,
-    });
-    await newConnection.save();
-
-    //Search for Users
-    const student = await User.findOne({
-      where: { id: newConnection.student_id },
-    });
-    const investor = await User.findOne({
-      where: { id: newConnection.investor_id },
+  try {
+    const connection = await Connections.findOne({
+      where: {
+        student_id: req.session.user.id,
+        investor_id: req.body.investor_id,
+      },
     });
 
-    res.json({
-      id: newConnection.id,
-      investor: investor.login,
-      student: student.login,
-      status: newConnection.status,
-    });
-  } else {
-    res.json({ err: "Connection is already created!" });
+    if (!connection) {
+      const newConnection = await Connections.create({
+        student_id: req.session.user.id,
+        investor_id: req.body.investor_id,
+        status: req.body.status,
+      });
+
+      const [student, investor] = await Promise.all([
+        User.findOne({ where: { id: newConnection.student_id } }),
+        User.findOne({ where: { id: newConnection.investor_id } }),
+      ]);
+
+      res.json({
+        id: newConnection.id,
+        investor: investor.login,
+        student: student.login,
+        status: newConnection.status,
+      });
+    } else {
+      res.json({ err: "Connection is already created!" });
+    }
+  } catch (error) {
+    console.error("Error updating connection:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
 exports.connectionsStatusUpdate = async (req, res) => {
-  let connection = await Connections.findOne({
-    where: { student_id: req.body.student_id, investor_id: req.body.investor_id },
-  });
+  try {
+    const connection = await Connections.findOne({
+      where: {
+        student_id: req.body.student_id,
+        investor_id: req.body.investor_id,
+      },
+    });
 
-  connection.status = req.body.status;
-  await connection.save();
-  res.end();
+    if (connection) {
+      connection.status = req.body.status;
+      await connection.save();
+      res.end();
+    } else {
+      res.status(404).json({ error: "Connection not found" });
+    }
+  } catch (error) {
+    console.error("Error updating connection status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
+

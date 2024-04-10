@@ -14,34 +14,22 @@ function serializeUser(user) {
 }
 
 exports.isUser = async (req, res) => {
-  let isAuth;
+  const isAuth = !!req.session.user;
 
-  if (req.session.user) {
-    isAuth = true;
-
-    res.json({
-      status: req.session.user.status || 0,
-      user: req.session.user.login || 0,
-      isAuth: isAuth,
-    });
-  } else {
-    isAuth = false;
-
-    res.json({
-      isAuth: isAuth,
-    });
-  }
+  res.json({
+    status: req.session.user?.status || 0,
+    user: req.session.user?.login || 0,
+    isAuth,
+  });
 };
 
-exports.createUserAndSession = async (req, res, next) => {
+exports.createUserAndSession = async (req, res) => {
   const { login, password, email, status } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    //Проверка существует ли пользователь
-    const checkUser = await User.findOne({ where: { email: email } });
-    console.log(checkUser);
+    const checkUser = await User.findOne({ where: { email } });
     if (checkUser) {
       return res.json({
         err: "Your Email is already used!",
@@ -49,10 +37,10 @@ exports.createUserAndSession = async (req, res, next) => {
     }
 
     const newUser = await User.create({
-      login: login,
+      login,
       password: hashedPassword,
-      email: email,
-      status: status,
+      email,
+      status,
     });
 
     req.session.user = serializeUser(newUser);
@@ -60,12 +48,11 @@ exports.createUserAndSession = async (req, res, next) => {
     console.log(err);
   }
 
-  let isAuth;
-  if (req.session.user) isAuth = true;
+  const isAuth = !!req.session.user;
   res.json({
-    status: req.session.user.status,
-    user: req.session.user.login,
-    isAuth: isAuth,
+    status: req.session.user?.status,
+    user: req.session.user?.login,
+    isAuth,
   });
 };
 
@@ -74,7 +61,7 @@ exports.checkUserAndCreateSession = async (req, res) => {
 
   try {
     const user = await User.findOne({
-      where: { email: email },
+      where: { email },
       raw: true,
     });
     if (!user) return failAuth(res);
@@ -85,12 +72,11 @@ exports.checkUserAndCreateSession = async (req, res) => {
     console.log(err);
   }
 
-  let isAuth;
-  if (req.session.user) isAuth = true;
+  const isAuth = !!req.session.user;
   res.json({
-    status: req.session.user.status,
-    user: req.session.user.login,
-    isAuth: isAuth,
+    status: req.session.user?.status,
+    user: req.session.user?.login,
+    isAuth,
   });
 };
 
@@ -101,3 +87,4 @@ exports.destroySession = async (req, res, next) => {
     return res.status(200).end();
   });
 };
+
