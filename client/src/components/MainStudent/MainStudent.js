@@ -1,40 +1,39 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Container, Row, Col } from "react-bootstrap";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Cards from "./Cards";
 import { getInvestorsAC } from "../../store/actions";
-import { useDispatch } from "react-redux";
 
 function MainStudent() {
-  //JS
   const dispatch = useDispatch();
-  React.useEffect(() => {
-    (async () => {
-      //Auth Data
-      const res = await fetch("/getAllInvestors");
-      const data = await res.json();
-      dispatch(getInvestorsAC(data));
-    })();
-  }, [dispatch]);
-
   const investorArr = useSelector((store) => store.investor);
 
-  //Component
+  useEffect(() => {
+    const fetchInvestors = async () => {
+      try {
+        const res = await fetch("/getAllInvestors");
+        const data = await res.json();
+        dispatch(getInvestorsAC(data));
+      } catch (error) {
+        console.error("Error fetching investors:", error);
+      }
+    };
+    fetchInvestors();
+  }, [dispatch]);
+
   return (
     <div className="mainModule">
-      {/* Investors Section */}
       <Container fluid id="welcome_block" className="my-3 p-3">
         <h2 className="text-center">Investors</h2>
         <Row className="ps-3 py-2 mb-3">
-          {/* MAP */}
-          {investorArr ? investorArr.map((element) => (
-          <Cards element={element} key={element.id} />
-        )) : null}
+          {investorArr &&
+            investorArr.map((element) => (
+              <Cards element={element} key={element.id} />
+            ))}
         </Row>
       </Container>
 
-      {/* FOOTER */}
       <footer className="footer mt-3 bg-light">
         <Row className="px-5">
           <p className="fs-3">Contacts</p>
@@ -67,3 +66,4 @@ function MainStudent() {
 }
 
 export default MainStudent;
+
