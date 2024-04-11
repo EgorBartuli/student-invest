@@ -1,19 +1,8 @@
-import "../../App.css";
 import React from "react";
 import { Link } from "react-router-dom";
-import {
-  Container,
-  Row,
-  Col,
-  Stack,
-  Image,
-  Button,
-  Carousel,
-  Form,
-} from "react-bootstrap";
-import inst from "./imgs/inst.jpg"; // with import
-import inst2 from "./imgs/inst2.png"; // with import
-import inst4 from "./imgs/inst4.jpg"; // with import
+import { Container, Row, Col, Stack, Image, Carousel } from "react-bootstrap";
+import inst from "./imgs/inst.jpg";
+import inst2 from "./imgs/inst2.png";
 
 function Main() {
   return (
@@ -21,16 +10,7 @@ function Main() {
       {/* Welcome Section */}
       <Container fluid id="welcome_block" className="my-3 p-3">
         <Row className="ps-3 py-2 bg-light bg-gradient">
-          <Col
-            md={7}
-            lg={6}
-            className="
-              d-flex
-              justify-content-start
-              align-self-center
-              flex-column
-            "
-          >
+          <Col md={7} lg={6} className="d-flex flex-column">
             <Stack>
               <p className="fs-3">
                 We believe that every individual thrives in a learning-friendly
@@ -49,16 +29,7 @@ function Main() {
               </Link>
             </Stack>
           </Col>
-          <Col
-            md={5}
-            lg={6}
-            className="
-              d-flex
-              align-items-center
-              lite-description
-              d-none d-md-block
-            "
-          >
+          <Col md={5} lg={6} className="d-none d-md-block">
             <Image fluid src={inst} alt="University #1" />
           </Col>
         </Row>
@@ -119,9 +90,6 @@ function Main() {
           <Col md={7} lg={9} className="d-flex justify-content-end">
             <Link className="nav-link d-none d-md-block" to="/auth/register">
               Sign Up
-            </Link>
-            <Link className="nav-link d-none d-md-block" to="/auth/login">
-              Sign In
             </Link>
           </Col>
         </Row>
